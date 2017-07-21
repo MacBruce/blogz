@@ -50,44 +50,38 @@ def require_login():
 # def index():
 #     return redirect('/blog')
 
-@app.route('/signup', methods = ['POST', 'Get'])
+@app.route('/register', methods=['POST', 'GET'])
 def register():
+
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         verify = request.form['verify']
 
-        if isEmpty(username) or isEmpty(password) or isEmpty(verify):
-            flash('Invalid credentials, please try again')
-            return redirect('/signup')
-
-        if lessThan(username, 3) or greaterThan(username, 20) or isSpace(username):
-            flash('Invalid username, must be 3-20 charecters long without spaces')
-            return redirect('/signup')
-
-        if lessThan(password, 3) or greaterThan(password, 20) or isSpace(password):
-            flash('Invalid password, must be 3-20 charecters without spaces. ')
-            return redirect('/signup')
-
-        if password != verify:
-            flash('Your passwords do not match, try again')
-            return redirect('/signup')
+        existing_user = User.query.filter_by(email=email).first()
+        if not existing_user:
+            if isEmpty(password):
+                blank_error = "Must create a password!"
+                return render_template('register.html', blank_error=blank_error)
+            elif lessThan(password, 4):
+                len_error = "Password must be longer than 3 characters"
+                return render_template('register.html', len_error=len_error)
+            elif password == verify:
+                new_user = User(email, password)
+                db.session.add(new_user)
+                db.session.commit()
+                session['email'] = email
+                return redirect('/newpost')
+            elif password != verify:
+                password_v_error = 'Your passwords do not match, try again.'
+                return render_template('register.html', password_v_error=password_v_error)
 
         else:
-            users = User.query.filter_by(username=username).first()
+            duplicate_error = "User Exists"
+            return render_template('register.html', duplicate_error=duplicate_error)
+    else:
+        return render_template('register.html')
 
-            if users:
-                flash('Your username has been taken, please sign in or create an account')
-                return redirect('/sigup')
-
-            else:
-                nUser = User(email = email, password = password)
-                db.session.add(nUser)
-                db.session.commit()
-                session['username'] = username
-                return redirect('/newpost')
-
-    return render_template('register.html')
 
 
 @app.route('/blog', methods=['POST', 'GET'])
@@ -129,14 +123,20 @@ def newpost():
             dynamic_str = "?id=" + str(session_id.id)
 
             return redirect('/blog' + dynamic_str)
-             
+
     return render_template('newpost.html')
 
-      
+@app.route('/logout')
+def logout():
+
+    if 'email' in session:
+        del session['email']
+        logout_success = "You have logged out"
+    return redirect('/blogs')
+    
 
 
 
 
 if __name__ == '__main__':
     app.run()
-
