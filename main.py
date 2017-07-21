@@ -102,12 +102,16 @@ def newpost():
     title_er = 'Your blog needs a title'
     body_er = 'Your blog needs a body'
 
-
+# didnt want to use flash as it is a bain to my existance
     if request.method == 'POST':
         sessionOwner = User.query.filter_by(email = session['email']).first()
         #grab data from forms
         blog_title = request.form['title']
         blog_body = request.form['body']
+
+        session_list = []
+        # holding info to temporarily display
+        session_list.append(sessionOwner)
 
         if isEmpty(blog_title) and isEmpty(blog_body):
             return render_template('newpost.html', title_er=title_er, body_er=body_er)
@@ -133,7 +137,7 @@ def logout():
         del session['email']
         logout_success = "You have logged out"
     return redirect('/blogs')
-    
+
 
 
 
